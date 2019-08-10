@@ -1,0 +1,15 @@
+{
+    "name": "henrik/service-locator",
+    "type": "library",
+    "license": "BSD",
+    "minimum-stability": "dev",
+    "require": {
+        "henrik/container": "1.0",
+        "henrik/component": "^1.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "henrik\\sl\\": "src/"
+        }
+    }
+}
