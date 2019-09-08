@@ -14,6 +14,7 @@ namespace henrik\sl\helpers;
  */
 class ArrayConfigParser
 {
+
     public static function parse($definition)
     {
         $item = [];

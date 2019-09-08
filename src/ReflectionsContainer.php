@@ -5,9 +5,18 @@ namespace henrik\sl;
 
 
 use henrik\container\Container;
+use henrik\container\ContainerModes;
 
 class ReflectionsContainer extends Container
 {
+    /**
+     * ReflectionsContainer constructor.
+     */
+    public function __construct()
+    {
+        $this->change_mode(ContainerModes::SINGLE_VALUE_MODE);
+    }
+
     /**
      * @param $klass
      * @return mixed
