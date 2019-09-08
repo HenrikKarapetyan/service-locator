@@ -13,4 +13,4 @@ namespace henrik\sl\exceptions;
  * Class UnknownScopeException
  * @package henrik\sl\exceptions
  */
-class UnknownScopeException extends ConfigurationException{}
+class UnknownScopeException extends InjectorConfigurationException {}

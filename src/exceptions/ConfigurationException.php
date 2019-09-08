@@ -16,7 +16,7 @@ use Throwable;
  * Class ConfigurationException
  * @package henrik\sl\exceptions
  */
-class ConfigurationException extends Exception
+class ConfigurationException extends InjectorException
 {
     /**
      * ConfigurationException constructor.

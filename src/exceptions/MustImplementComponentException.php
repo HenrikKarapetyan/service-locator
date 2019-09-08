@@ -13,4 +13,4 @@ namespace henrik\sl\exceptions;
  * Class MustImplementComponentException
  * @package henrik\sl\exceptions
  */
-class MustImplementComponentException extends ServerException{}
+class MustImplementComponentException extends InjectorException{}

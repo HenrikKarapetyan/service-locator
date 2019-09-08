@@ -13,7 +13,7 @@ namespace henrik\sl\exceptions;
  * Class ServiceConfigurationException
  * @package henrik\sl\exceptions
  */
-class ServiceConfigurationException extends ConfigurationException
+class ServiceConfigurationException extends InjectorConfigurationException
 {
 
 }
