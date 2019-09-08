@@ -17,6 +17,10 @@ class Injector
 {
 
     /**
+     * @var self
+     */
+    private static $instance;
+    /**
      * @var ServicesContainer
      */
     private $serviceContainer;
@@ -28,7 +32,7 @@ class Injector
     /**
      * Injector constructor.
      */
-    public function __construct()
+    private function __construct()
     {
         $this->serviceContainer = new ServicesContainer();
         $this->reflectionsContainer = new ReflectionsContainer();
@@ -164,5 +168,16 @@ class Injector
     public function get($id)
     {
         return $this->serviceContainer->get($id);
+    }
+
+    /**
+     * @return mixed
+     */
+    public static function instance()
+    {
+        if (static::$instance == null){
+            static::$instance = new static();
+        }
+        return static::$instance;
     }
 }
