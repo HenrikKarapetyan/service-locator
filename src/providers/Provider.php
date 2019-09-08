@@ -13,5 +13,8 @@ namespace henrik\sl\providers;
  */
 abstract class Provider
 {
+    /**
+     * @return mixed
+     */
     abstract function provide();
 }

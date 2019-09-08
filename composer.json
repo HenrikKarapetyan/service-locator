@@ -1,16 +1,17 @@
 {
-    "name": "henrik/service-locator",
-    "type": "library",
-    "license": "MIT",
-    "description": "Service Locator",
-    "minimum-stability": "dev",
-    "require": {
-        "henrik/container": "1.*",
-        "henrik/component": "1.*"
-    },
-    "autoload": {
-        "psr-4": {
-            "henrik\\sl\\": "src/"
-        }
+  "name": "henrik/service-locator",
+  "type": "library",
+  "license": "MIT",
+  "description": "Service Locator",
+  "minimum-stability": "dev",
+  "require": {
+    "henrik/container": "1.*",
+    "henrik/component": "1.*",
+    "ext-json": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "henrik\\sl\\": "src/"
     }
+  }
 }

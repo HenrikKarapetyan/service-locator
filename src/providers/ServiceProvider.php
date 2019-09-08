@@ -9,8 +9,13 @@
 namespace henrik\sl\providers;
 
 
+use henrik\sl\Injector;
 use henrik\sl\ServiceScope;
 
+/**
+ * Class ServiceProvider
+ * @package henrik\sl\providers
+ */
 abstract class ServiceProvider extends Provider implements ServiceScope
 {
     /**
@@ -21,15 +26,21 @@ abstract class ServiceProvider extends Provider implements ServiceScope
      * @var array
      */
     protected $params = [];
+    /**
+     * @var Injector
+     */
+    protected $injector;
 
     /**
      * ServiceProvider constructor.
+     * @param Injector
      * @param $value
      * @param array $params
      */
-    public function __construct($value, $params = [])
+    public function __construct($injector, $value, $params = [])
     {
         $this->value = $value;
         $this->params = $params;
+        $this->injector = $injector;
     }
 }

@@ -1,10 +1,14 @@
 <?php
 
-require "vendor/autoload.php";
+
+require "../vendor/autoload.php";
+
+use henrik\sl\Injector;
 
 $services = require "services.php";
 
-\henrik\sl\ServiceLocator::load($services);
+$injector  = new Injector();
+$injector->load($services);
 
 
-var_dump(\henrik\sl\ServiceLocator::get('A'));
+var_dump($injector->get(D::class));

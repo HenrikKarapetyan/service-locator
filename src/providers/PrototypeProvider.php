@@ -8,9 +8,6 @@
 
 namespace henrik\sl\providers;
 
-
-use henrik\sl\Instantiator;
-
 class PrototypeProvider extends ObjectProvider
 {
     /**
@@ -23,7 +20,7 @@ class PrototypeProvider extends ObjectProvider
     function provide()
     {
         if ($this->instance === null) {
-            $this->instance = Instantiator::instantiate($this->value, $this->params);
+            $this->instance = $this->injector->instantiate($this->value, $this->params);
         }
         return clone $this->instance;
     }

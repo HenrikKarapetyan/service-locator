@@ -15,10 +15,16 @@ interface ServiceScope
      * DI singletons
      */
     const SINGLETON = "singleton";
+
     /**
      * DI prototypes
      */
     const PROTOTYPE = "prototype";
+
+    /**
+     * DI factories
+     */
+    const FACTORY = "factory";
     /**
      * DI parameters
      */
@@ -32,5 +38,5 @@ interface ServiceScope
     /**
      * DI scopes Array
      */
-    const SCOPES = [self::SINGLETON, self::PROTOTYPE, self::ALIAS, self::PARAM];
+    const SCOPES = [self::SINGLETON, self::PROTOTYPE, self::FACTORY, self::ALIAS, self::PARAM];
 }

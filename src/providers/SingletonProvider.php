@@ -8,11 +8,10 @@
 
 namespace henrik\sl\providers;
 
-
-use sparrow\core\Component;
-use henrik\sl\exceptions\MustImplementComponentException;
-use henrik\sl\Instantiator;
-
+/**
+ * Class SingletonProvider
+ * @package henrik\sl\providers
+ */
 class SingletonProvider extends ObjectProvider
 {
     /**
@@ -25,7 +24,7 @@ class SingletonProvider extends ObjectProvider
     function provide()
     {
         if ($this->instance === null)
-            $this->instance = Instantiator::instantiate($this->value, $this->params);
+            $this->instance = $this->injector->instantiate($this->value, $this->params);
         return $this->instance;
     }
 }
