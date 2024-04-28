@@ -1,17 +1,41 @@
 {
   "name": "henrik/service-locator",
   "type": "library",
-  "license": "MIT",
+  "license": "GPL-2.0-only",
   "description": "Service Locator",
   "minimum-stability": "dev",
   "require": {
-    "henrik/container": "1.*",
-    "henrik/component": "1.*",
+    "php": ">=8.2",
+    "henrik/container": "2.*",
+    "henrik/component": "2.*",
     "ext-json": "*"
   },
   "autoload": {
     "psr-4": {
       "henrik\\sl\\": "src/"
     }
+  },
+  "require-dev": {
+    "phpmd/phpmd": "^2.15",
+    "friendsofphp/php-cs-fixer": "dev-master",
+    "phpstan/phpstan": "2.0.x-dev"
+  },
+  "scripts": {
+    "phpstan": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpstan --memory-limit=-1"
+    ],
+    "fix": [
+      "Composer\\Config::disableProcessTimeout",
+      "PHP_CS_FIXER_IGNORE_ENV=1 ./vendor/bin/php-cs-fixer fix src --diff -vvv --config=.php-cs-fixer.dist.php"
+    ],
+    "phpmd-ci": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpmd ./src gitlab ./phpmd.xml > phpmd-report.json"
+    ],
+    "phpmd-html": [
+      "Composer\\Config::disableProcessTimeout",
+      "./vendor/bin/phpmd ./src html ./phpmd.xml > phpmd-report.html"
+    ]
   }
 }

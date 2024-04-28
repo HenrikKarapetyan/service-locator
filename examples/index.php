@@ -7,8 +7,8 @@ use henrik\sl\Injector;
 
 $services = require "services.php";
 
-$injector  = new Injector();
+$injector  = Injector::instance();
 $injector->load($services);
 
 
-var_dump($injector->get(D::class));
+$injector->get(\henrik\sl\SampleClasses\SampleClassD::class);

@@ -3,18 +3,19 @@
  * Created by PhpStorm.
  * User: Henrik
  * Date: 4/3/2018
- * Time: 8:48 PM
+ * Time: 8:48 PM.
  */
+declare(strict_types=1);
 
-namespace henrik\sl\providers;
+namespace henrik\sl\Providers;
+
 /**
- * Class Provider
- * @package henrik\sl\providers
+ * Class Provider.
  */
 abstract class Provider
 {
     /**
      * @return mixed
      */
-    abstract function provide();
+    abstract public function provide(): mixed;
 }

@@ -3,40 +3,36 @@
  * Created by PhpStorm.
  * User: Henrik
  * Date: 4/3/2018
- * Time: 8:54 PM
+ * Time: 8:54 PM.
  */
+
+declare(strict_types=1);
 
 namespace henrik\sl;
 
-
-interface ServiceScope
+enum ServiceScope: string
 {
     /**
-     * DI singletons
+     * DI singletons.
      */
-    const SINGLETON = "singleton";
+    case SINGLETON = 'singleton';
 
     /**
-     * DI prototypes
+     * DI prototypes.
      */
-    const PROTOTYPE = "prototype";
+    case PROTOTYPE = 'prototype';
 
     /**
-     * DI factories
+     * DI factories.
      */
-    const FACTORY = "factory";
+    case FACTORY = 'factory';
     /**
-     * DI parameters
+     * DI parameters.
      */
-    const PARAM = "param";
+    case PARAM = 'param';
 
     /**
-     * DI Aliases
+     * DI Aliases.
      */
-    const ALIAS = 'alias';
-
-    /**
-     * DI scopes Array
-     */
-    const SCOPES = [self::SINGLETON, self::PROTOTYPE, self::FACTORY, self::ALIAS, self::PARAM];
+    case ALIAS = 'alias';
 }

@@ -3,14 +3,13 @@
  * Created by PhpStorm.
  * User: Henrik
  * Date: 2/6/2018
- * Time: 3:01 PM
+ * Time: 3:01 PM.
  */
+declare(strict_types=1);
 
-namespace henrik\sl\exceptions;
-
+namespace henrik\sl\Exceptions;
 
 /**
- * Class UnknownScopeException
- * @package henrik\sl\exceptions
+ * Class UnknownScopeException.
  */
 class UnknownScopeException extends InjectorConfigurationException {}

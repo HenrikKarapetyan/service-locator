@@ -3,41 +3,40 @@
  * Created by PhpStorm.
  * User: Henrik
  * Date: 4/3/2018
- * Time: 8:48 PM
+ * Time: 8:48 PM.
  */
+declare(strict_types=1);
 
-namespace henrik\sl\providers;
-
+namespace henrik\sl\Providers;
 
 use henrik\sl\Injector;
-use henrik\sl\ServiceScope;
 
 /**
- * Class ServiceProvider
- * @package henrik\sl\providers
+ * Class ServiceProvider.
  */
-abstract class ServiceProvider extends Provider implements ServiceScope
+abstract class ServiceProvider extends Provider
 {
     /**
      * @var string
      */
-    protected $value;
+    protected string $value;
     /**
      * @var array
      */
-    protected $params = [];
+    protected array $params = [];
     /**
      * @var Injector
      */
-    protected $injector;
+    protected Injector $injector;
 
     /**
      * ServiceProvider constructor.
-     * @param Injector
-     * @param $value
+     *
+     * @param Injector $injector
+     * @param string $value
      * @param array $params
      */
-    public function __construct($injector, $value, $params = [])
+    public function __construct(Injector $injector, string $value, array $params = [])
     {
         $this->value = $value;
         $this->params = $params;

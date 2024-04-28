@@ -1,3 +1,6 @@
 composer.lock
 .idea/
 vendor/
+
+phpmd-report.html
+.php-cs-fixer.cache

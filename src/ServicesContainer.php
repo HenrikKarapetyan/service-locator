@@ -1,46 +1,52 @@
 <?php
 
+declare(strict_types=1);
 
 namespace henrik\sl;
 
-
 use henrik\container\Container;
-use henrik\container\exceptions\ServiceNotFoundException;
-use henrik\sl\providers\Provider;
 use henrik\container\ContainerModes;
+use henrik\container\exceptions\IdAlreadyExistsException;
+use henrik\container\exceptions\ServiceNotFoundException;
+use henrik\container\exceptions\UndefinedModeException;
+use henrik\sl\Providers\Provider;
 
 class ServicesContainer extends Container
 {
     /**
      * ServicesContainer constructor.
+     *
+     * @throws UndefinedModeException
      */
     public function __construct()
     {
-        $this->change_mode(ContainerModes::SINGLE_VALUE_MODE);
+        $this->changeMode(ContainerModes::SINGLE_VALUE_MODE);
     }
 
     /**
-     * @param $id
+     * @param string   $id
      * @param Provider $provider
-     * @throws \Exception
+     *
+     * @throws IdAlreadyExistsException
      */
-    public function add($id, Provider $provider)
+    public function add(string $id, Provider $provider): void
     {
         $this->set($id, $provider);
     }
 
     /**
-     * @param $id
-     * @return mixed
+     * @param string $id
+     *
      * @throws ServiceNotFoundException
-     * @throws \Exception
+     *
+     * @return mixed
      */
-    public function get($id)
+    public function get(string $id): mixed
     {
         if ($this->has($id)) {
             return parent::get($id)->provide();
         }
-        throw new ServiceNotFoundException(sprintf('Service "%s" not found', $id));
-    }
 
+        throw new ServiceNotFoundException($id);
+    }
 }
