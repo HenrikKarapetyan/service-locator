@@ -3,13 +3,13 @@
 require '../vendor/autoload.php';
 
 use henrik\sl\Injector;
-
-$services = require 'services.php';
+use henrik\sl\InjectorModes;
+use henrik\sl\SampleClasses\SampleClassD;
 
 $injector = Injector::instance();
-$injector->load($services);
+$injector->setMode(InjectorModes::AUTO_REGISTER);
 
-$val  = $injector->get('simpleAlias');
-$val2 = $injector->get('simpleAlias');
+/** @var SampleClassD $val */
+$val = $injector->get(SampleClassD::class);
 
-var_dump($val === $val2);
+$injector->dumpContainer();

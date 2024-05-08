@@ -2,6 +2,9 @@
 
 namespace henrik\sl\SampleClasses;
 
+use henrik\sl\Attributes\AsPrototype;
+
+#[AsPrototype(id: 'asdasd')]
 class SampleClassB
 {
     /**

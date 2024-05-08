@@ -2,7 +2,9 @@
 
 namespace henrik\sl\SampleClasses;
 
-class SampleClassD
+use henrik\sl\ServiceScopeInterfaces\FactoryAwareInterface;
+
+class SampleClassD implements FactoryAwareInterface
 {
     /**
      * @var SampleClassA

@@ -52,6 +52,6 @@ class ServicesContainer extends Container
             return $containerServedData;
         }
 
-        throw new ServiceNotFoundException($id);
+        return null;
     }
 }

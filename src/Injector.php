@@ -14,9 +14,15 @@ use henrik\sl\Providers\FactoryProvider;
 use henrik\sl\Providers\ParamProvider;
 use henrik\sl\Providers\PrototypeProvider;
 use henrik\sl\Providers\SingletonProvider;
+use henrik\sl\ServiceScopeInterfaces\FactoryAwareInterface;
+use henrik\sl\ServiceScopeInterfaces\PrototypeAwareInterface;
+use henrik\sl\ServiceScopeInterfaces\SingletonAwareInterface;
 use henrik\sl\Utils\ArrayConfigParser;
 use ReflectionClass;
 use ReflectionMethod;
+use ReflectionNamedType;
+use ReflectionParameter;
+use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Class Injector.
@@ -35,6 +41,8 @@ class Injector
      * @var RCContainer
      */
     private RCContainer $reflectionsContainer;
+
+    private InjectorModes $mode = InjectorModes::CONFIG_FILE;
 
     /**
      * Injector constructor.
@@ -67,21 +75,7 @@ class Injector
     {
         foreach ($services as $scope => $serviceItems) {
 
-            foreach ($serviceItems as $item) {
-                /** @var array<string, string|array<string, mixed>> $item */
-                $definition = ArrayConfigParser::parse($item);
-
-                $providerInst = match ($scope) {
-                    ServiceScope::SINGLETON->value => new SingletonProvider($this, $definition),
-                    ServiceScope::FACTORY->value   => new FactoryProvider($this, $definition),
-                    ServiceScope::PROTOTYPE->value => new PrototypeProvider($this, $definition),
-                    ServiceScope::ALIAS->value     => new AliasProvider($this, $definition),
-                    ServiceScope::PARAM->value     => new ParamProvider($this, $definition),
-                    default                        => throw new UnknownScopeException(sprintf('Unknown  scope "%s"', $scope)),
-
-                };
-                $this->serviceContainer->set((string) $definition->getId(), $providerInst);
-            }
+            $this->parseEachScopeData($scope, $serviceItems);
         }
     }
 
@@ -89,10 +83,10 @@ class Injector
      * @param string               $klass
      * @param array<string, mixed> $params
      *
-     * @throws ServiceNotFoundException
      * @throws \henrik\container\exceptions\ServiceNotFoundException
      * @throws IdAlreadyExistsException
      * @throws ServiceConfigurationException
+     * @throws ServiceNotFoundException
      *
      * @return object
      */
@@ -124,7 +118,7 @@ class Injector
      * @param array<string, mixed> $params
      *
      * @throws ServiceConfigurationException
-     * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws ServiceNotFoundException|\henrik\container\exceptions\ServiceNotFoundException
      *
      * @return object
      */
@@ -153,22 +147,65 @@ class Injector
     /**
      * @param string $id
      *
-     * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws ClassNotFoundException*@throws IdAlreadyExistsException
+     * @throws ServiceNotFoundException|IdAlreadyExistsException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException|UnknownScopeException
      *
      * @return mixed
      */
     public function get(string $id): mixed
     {
-        return $this->serviceContainer->get($id);
+        $dataFromContainer = $this->serviceContainer->get($id);
+        if ($this->mode == InjectorModes::AUTO_REGISTER) {
+            if ($dataFromContainer === null) {
+
+                if (!class_exists($id)) {
+                    throw new ClassNotFoundException($id);
+                }
+
+                $scope      = $this->guessServiceScope($id);
+                $definition = new Definition($id, $id);
+                $this->add($scope->value, $definition);
+
+                return $this->serviceContainer->get($id);
+            }
+
+        }
+
+        if (is_null($dataFromContainer)) {
+            throw new ServiceNotFoundException($id);
+        }
+
+        return $dataFromContainer;
+
+    }
+
+    public function getMode(): InjectorModes
+    {
+        return $this->mode;
+    }
+
+    public function setMode(InjectorModes $mode): void
+    {
+        $this->mode = $mode;
+    }
+
+    public function dumpContainer(): void
+    {
+        foreach ($this->serviceContainer->getAll() as $id => $containerItem) {
+            if (is_object($containerItem)) {
+                printf("id: %s, class: %s \n", $id, get_class($containerItem));
+            }
+        }
     }
 
     /**
      * @param ReflectionClass<object> $reflectionClass
      * @param ReflectionMethod        $method
      *
+     * @throws ServiceNotFoundException
      * @throws Exception
      * @throws \henrik\container\exceptions\ServiceNotFoundException
-     * @throws ServiceNotFoundException
      *
      * @return object
      */
@@ -177,24 +214,118 @@ class Injector
         $args   = $method->getParameters();
         $reArgs = [];
         if (count($args) > 0) {
+
             foreach ($args as $arg) {
                 if ($arg->isDefaultValueAvailable()) {
                     $reArgs[$arg->getName()] = $arg->getDefaultValue();
 
                     continue;
                 }
-                if ($this->serviceContainer->has($arg->getName())) {
-                    $paramValue = $this->serviceContainer->get($arg->getName());
-                } elseif (!is_null($arg->getType()) && $this->serviceContainer->has($arg->getType()->getName())) {
-                    $typeName   = $arg->getType()->getName();
-                    $paramValue = $this->serviceContainer->get($typeName);
-                } else {
-                    throw new ServiceNotFoundException(sprintf('Service from "%s" not found in service container', $arg->getName()));
-                }
+                $paramValue = $this->getValueFromContainer($arg);
+
                 $reArgs[$arg->getName()] = $paramValue;
             }
         }
 
         return $reflectionClass->newInstanceArgs($reArgs);
+    }
+
+    /**
+     * @param string     $scope
+     * @param Definition $definition
+     *
+     * @throws UnknownScopeException
+     * @throws IdAlreadyExistsException
+     */
+    private function add(string $scope, Definition $definition): void
+    {
+
+        $providerInst = match ($scope) {
+            ServiceScope::SINGLETON->value => new SingletonProvider($this, $definition),
+            ServiceScope::FACTORY->value   => new FactoryProvider($this, $definition),
+            ServiceScope::PROTOTYPE->value => new PrototypeProvider($this, $definition),
+            ServiceScope::ALIAS->value     => new AliasProvider($this, $definition),
+            ServiceScope::PARAM->value     => new ParamProvider($this, $definition),
+            default                        => throw new UnknownScopeException(sprintf('Unknown  scope "%s"', $scope)),
+
+        };
+        $this->serviceContainer->set((string) $definition->getId(), $providerInst);
+    }
+
+    /**
+     * @param ReflectionParameter $arg
+     *
+     * @throws UnknownScopeException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException|IdAlreadyExistsException
+     * @throws ClassNotFoundException
+     * @throws ServiceNotFoundException
+     *
+     * @return mixed
+     */
+    private function getValueFromContainer(ReflectionParameter $arg): mixed
+    {
+        if ($this->serviceContainer->has($arg->getName())) {
+            return $this->serviceContainer->get($arg->getName());
+        }
+
+        if (!$arg->getType() instanceof ReflectionNamedType) {
+            throw new ClassNotFoundException($arg->getName());
+        }
+
+        if ($this->mode !== InjectorModes::AUTO_REGISTER) {
+
+            if ($this->serviceContainer->has($arg->getType()->getName())) {
+                $typeName = $arg->getType()->getName();
+
+                return $this->serviceContainer->get($typeName);
+            }
+
+            throw new ServiceNotFoundException(sprintf('Service from "%s" not found in service container', $arg->getType()->getName()));
+
+        }
+        $typeName = $arg->getType()->getName();
+
+        return $this->get($typeName);
+    }
+
+    private function guessServiceScope(string $id): ServiceScope
+    {
+        $classImplementedInterfaces = class_implements($id);
+
+        if (is_array($classImplementedInterfaces) && count($classImplementedInterfaces) > 0) {
+
+            if (in_array(SingletonAwareInterface::class, $classImplementedInterfaces)) {
+                return ServiceScope::SINGLETON;
+            }
+
+            if (in_array(PrototypeAwareInterface::class, $classImplementedInterfaces)) {
+                return ServiceScope::PROTOTYPE;
+            }
+
+            if (in_array(FactoryAwareInterface::class, $classImplementedInterfaces)) {
+                return ServiceScope::FACTORY;
+            }
+        }
+
+        return ServiceScope::SINGLETON;
+    }
+
+    /**
+     * @param string                    $scope
+     * @param array<string, int|string> $serviceItems
+     *
+     * @throws IdAlreadyExistsException
+     * @throws UnknownScopeException
+     *
+     * @return void
+     */
+    private function parseEachScopeData(string $scope, array $serviceItems): void
+    {
+        foreach ($serviceItems as $item) {
+            /** @var array<string, string|array<string, mixed>> $item */
+            $definition = ArrayConfigParser::parse($item);
+
+            $this->add($scope, $definition);
+        }
     }
 }
