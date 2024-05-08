@@ -1,14 +1,15 @@
 <?php
 
-
-require "../vendor/autoload.php";
+require '../vendor/autoload.php';
 
 use henrik\sl\Injector;
 
-$services = require "services.php";
+$services = require 'services.php';
 
-$injector  = Injector::instance();
+$injector = Injector::instance();
 $injector->load($services);
 
+$val  = $injector->get('simpleAlias');
+$val2 = $injector->get('simpleAlias');
 
-$injector->get(\henrik\sl\SampleClasses\SampleClassD::class);
+var_dump($val === $val2);

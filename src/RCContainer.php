@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace henrik\sl;
 
-use Exception;
 use henrik\container\Container;
 use henrik\container\ContainerModes;
 use henrik\container\exceptions\IdAlreadyExistsException;
+use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\container\exceptions\UndefinedModeException;
 use ReflectionClass;
 
-class ReflectionsContainer extends Container
+class RCContainer extends Container
 {
     /**
      * ReflectionsContainer constructor.
@@ -24,16 +24,16 @@ class ReflectionsContainer extends Container
     }
 
     /**
-     * @param $klass
+     * @param string $klass
      *
      * @throws IdAlreadyExistsException
-     * @throws Exception
+     * @throws ServiceNotFoundException
      *
      * @return mixed
      */
-    public function getReflectionClass($klass): mixed
+    public function getReflectionClass(string $klass): mixed
     {
-        if (!$this->has($klass)) {
+        if (!$this->has($klass) && class_exists($klass)) {
             $this->set($klass, new ReflectionClass($klass));
         }
 

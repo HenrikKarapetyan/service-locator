@@ -1,6 +1,8 @@
 <?php
 
-namespace henrik\sl\Helpers;
+declare(strict_types=1);
+
+namespace henrik\sl\Utils;
 
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\sl\Injector;
@@ -12,21 +14,18 @@ use ReflectionParameter;
 trait MethodORFunctionDependencyLoaderTrait
 {
     /**
-     * @param array $methodParams
+     * @param array<int, reflectionParameter> $methodParams
      *
      * @throws ServiceNotFoundException
      *
-     * @return array
+     * @return array<int, mixed>
      */
     private static function loadDependencies(array $methodParams): array
     {
         $injector = Injector::instance();
         $params   = [];
-        if (!empty($method_params)) {
-            foreach ($method_params as $param) {
-                /**
-                 * @var ReflectionParameter $param
-                 */
+        if (!empty($methodParams)) {
+            foreach ($methodParams as $param) {
                 $params[] = $injector->get($param->getName());
             }
         }

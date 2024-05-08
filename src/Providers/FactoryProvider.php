@@ -14,14 +14,14 @@ use henrik\sl\Exceptions\ServiceConfigurationException;
 class FactoryProvider extends ObjectProvider
 {
     /**
-     * @return mixed|null
-     *@throws \henrik\sl\Exceptions\ServiceNotFoundException
+     * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      * @throws ServiceNotFoundException|IdAlreadyExistsException
-     *
      * @throws ServiceConfigurationException
+     *
+     * @return object
      */
-    public function provide(): mixed
+    public function provide(): object
     {
-        return $this->injector->instantiate($this->value, $this->params);
+        return $this->injector->instantiate((string) $this->definition->getClass(), $this->definition->getParams());
     }
 }

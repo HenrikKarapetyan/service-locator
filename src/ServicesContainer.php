@@ -9,7 +9,7 @@ use henrik\container\ContainerModes;
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\container\exceptions\UndefinedModeException;
-use henrik\sl\Providers\Provider;
+use henrik\sl\Providers\ProviderInterface;
 
 class ServicesContainer extends Container
 {
@@ -24,12 +24,12 @@ class ServicesContainer extends Container
     }
 
     /**
-     * @param string   $id
-     * @param Provider $provider
+     * @param string            $id
+     * @param ProviderInterface $provider
      *
      * @throws IdAlreadyExistsException
      */
-    public function add(string $id, Provider $provider): void
+    public function add(string $id, ProviderInterface $provider): void
     {
         $this->set($id, $provider);
     }
@@ -44,7 +44,12 @@ class ServicesContainer extends Container
     public function get(string $id): mixed
     {
         if ($this->has($id)) {
-            return parent::get($id)->provide();
+            $containerServedData = parent::get($id);
+            if ($containerServedData instanceof ProviderInterface) {
+                return $containerServedData->provide();
+            }
+
+            return $containerServedData;
         }
 
         throw new ServiceNotFoundException($id);

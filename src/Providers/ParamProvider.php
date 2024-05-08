@@ -12,10 +12,10 @@ namespace henrik\sl\Providers;
 class ParamProvider extends ServiceProvider
 {
     /**
-     * @return string
+     * @return mixed
      */
-    public function provide(): string
+    public function provide(): mixed
     {
-        return $this->value;
+        return $this->definition->getValue();
     }
 }

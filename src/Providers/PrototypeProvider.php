@@ -21,12 +21,12 @@ class PrototypeProvider extends ObjectProvider
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      * @throws Exception
      *
-     * @return mixed|object
+     * @return object
      */
-    public function provide(): mixed
+    public function provide(): object
     {
         if ($this->instance === null) {
-            $this->instance = $this->injector->instantiate($this->value, $this->params);
+            $this->instance = $this->injector->instantiate((string) $this->definition->getClass(), $this->definition->getParams());
         }
 
         return clone $this->instance;

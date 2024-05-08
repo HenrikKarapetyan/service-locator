@@ -9,7 +9,12 @@ use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\sl\Exceptions\ServiceConfigurationException;
 use henrik\sl\Exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\UnknownScopeException;
-use henrik\sl\Helpers\ArrayConfigParser;
+use henrik\sl\Providers\AliasProvider;
+use henrik\sl\Providers\FactoryProvider;
+use henrik\sl\Providers\ParamProvider;
+use henrik\sl\Providers\PrototypeProvider;
+use henrik\sl\Providers\SingletonProvider;
+use henrik\sl\Utils\ArrayConfigParser;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -27,9 +32,9 @@ class Injector
      */
     private ServicesContainer $serviceContainer;
     /**
-     * @var ReflectionsContainer
+     * @var RCContainer
      */
-    private ReflectionsContainer $reflectionsContainer;
+    private RCContainer $reflectionsContainer;
 
     /**
      * Injector constructor.
@@ -37,7 +42,7 @@ class Injector
     private function __construct()
     {
         $this->serviceContainer     = new ServicesContainer();
-        $this->reflectionsContainer = new ReflectionsContainer();
+        $this->reflectionsContainer = new RCContainer();
     }
 
     /**
@@ -45,39 +50,37 @@ class Injector
      */
     public static function instance(): Injector
     {
-        if (static::$instance == null) {
-            static::$instance = new static();
+        if (self::$instance == null) {
+            self::$instance = new self();
         }
 
-        return static::$instance;
+        return self::$instance;
     }
 
     /**
-     * @param $services
+     * @param array<string, array<string, int|string>> $services
      *
      * @throws UnknownScopeException
      * @throws IdAlreadyExistsException
      */
-    public function load($services)
+    public function load(array $services): void
     {
-        foreach ($services as $scope => $service_items) {
+        foreach ($services as $scope => $serviceItems) {
 
-            if (!$this->isValidScope($scope)) {
-                throw new UnknownScopeException(sprintf('Unknown  scope "%s"', $scope));
-            }
+            foreach ($serviceItems as $item) {
+                /** @var array<string, string|array<string, mixed>> $item */
+                $definition = ArrayConfigParser::parse($item);
 
-            foreach ($service_items as $item) {
-                $parsedItem = ArrayConfigParser::parse($item);
-                $provider   = '\\henrik\\sl\\Providers\\' . ucfirst($scope . 'Provider');
-                $klass      = $parsedItem['class'];
-                $params     = [];
+                $providerInst = match ($scope) {
+                    ServiceScope::SINGLETON->value => new SingletonProvider($this, $definition),
+                    ServiceScope::FACTORY->value   => new FactoryProvider($this, $definition),
+                    ServiceScope::PROTOTYPE->value => new PrototypeProvider($this, $definition),
+                    ServiceScope::ALIAS->value     => new AliasProvider($this, $definition),
+                    ServiceScope::PARAM->value     => new ParamProvider($this, $definition),
+                    default                        => throw new UnknownScopeException(sprintf('Unknown  scope "%s"', $scope)),
 
-                if (isset($parsedItem['params'])) {
-                    $params = $parsedItem['params'];
-                }
-
-                $provider_inst = new $provider($this, $klass, $params);
-                $this->serviceContainer->set($parsedItem['id'], $provider_inst);
+                };
+                $this->serviceContainer->set((string) $definition->getId(), $providerInst);
             }
         }
     }
@@ -86,37 +89,32 @@ class Injector
      * @param string               $klass
      * @param array<string, mixed> $params
      *
-     * @throws IdAlreadyExistsException
-     * @throws ServiceConfigurationException
      * @throws ServiceNotFoundException
      * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws IdAlreadyExistsException
+     * @throws ServiceConfigurationException
      *
-     * @return mixed|null
+     * @return object
      */
-    public function instantiate(string $klass, array $params = []): mixed
+    public function instantiate(string $klass, array $params = []): object
     {
         /**
-         * @var ReflectionClass $reflectionClass
+         * @var ReflectionClass<object> $reflectionClass
          */
         $reflectionClass = $this->reflectionsContainer->getReflectionClass($klass);
-        $obj             = null;
-        if ($reflectionClass->isInstantiable()) {
-            $constructor = $reflectionClass->getConstructor();
-            //            if ($reflectionClass->implementsInterface(ComponentInterface::class)) {
-            if (!empty($constructor)) {
-                $obj = $this->loadMethodDependencies($reflectionClass, $constructor);
-            } else {
-                $obj = new $klass();
-            }
-            //            } else {
-            //                throw new MustImplementComponentException(
-            //                    sprintf('%s class must implements  %s interface',
-            //                        $reflectionClass->getName(),
-            //                        ComponentInterface::class));
-            //            }
-        } else {
+        if (!$reflectionClass->isInstantiable()) {
             throw new ServiceConfigurationException(sprintf('%s service constructor is private', $klass));
         }
+
+        $constructor = $reflectionClass->getConstructor();
+        if (empty($constructor)) {
+
+            $obj = new $klass();
+
+            return $this->initializeParams($obj, $params);
+        }
+
+        $obj = $this->loadMethodDependencies($reflectionClass, $constructor);
 
         return $this->initializeParams($obj, $params);
     }
@@ -128,58 +126,60 @@ class Injector
      * @throws ServiceConfigurationException
      * @throws \henrik\container\exceptions\ServiceNotFoundException
      *
-     * @return mixed
+     * @return object
      */
-    public function initializeParams(object $obj, array $params): mixed
+    public function initializeParams(object $obj, array $params): object
     {
-        foreach ($params as $attr_name => $attr_value) {
-            $method = 'set' . ucfirst($attr_name);
-            if (method_exists($obj, $method)) {
-                if (!is_array($attr_value) && str_starts_with($attr_value, '#')) {
-                    $service_id = trim($attr_value, '#');
-                    $attr_value = $this->serviceContainer->get($service_id);
-                }
-                $obj->{$method}($attr_value);
-            } else {
+        /** @var string|array<string, array<string, string>|string> $attrValue */
+        foreach ($params as $attrName => $attrValue) {
+            $method = 'set' . ucfirst($attrName);
+
+            if (!method_exists($obj, $method)) {
                 throw new ServiceConfigurationException(
-                    sprintf('property %s not found in object %s', $attr_name, json_encode($obj))
+                    sprintf('Property %s not found in object %s', $attrName, json_encode($obj))
                 );
             }
+
+            if (!is_array($attrValue) && str_starts_with($attrValue, '#')) {
+                $serviceId = trim($attrValue, '#');
+                $attrValue = $this->serviceContainer->get($serviceId);
+            }
+            $obj->{$method}($attrValue);
         }
 
         return $obj;
     }
 
     /**
-     * @param $id
+     * @param string $id
      *
      * @throws \henrik\container\exceptions\ServiceNotFoundException
      *
      * @return mixed
      */
-    public function get($id): mixed
+    public function get(string $id): mixed
     {
         return $this->serviceContainer->get($id);
     }
 
     /**
-     * @param $reflectionClass \ReflectionClass
-     * @param $method          \ReflectionMethod
+     * @param ReflectionClass<object> $reflectionClass
+     * @param ReflectionMethod        $method
      *
-     * @throws ServiceNotFoundException
      * @throws Exception
      * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws ServiceNotFoundException
      *
-     * @return mixed
+     * @return object
      */
-    private function loadMethodDependencies(ReflectionClass $reflectionClass, ReflectionMethod $method): mixed
+    private function loadMethodDependencies(ReflectionClass $reflectionClass, ReflectionMethod $method): object
     {
-        $args    = $method->getParameters();
-        $re_args = [];
+        $args   = $method->getParameters();
+        $reArgs = [];
         if (count($args) > 0) {
             foreach ($args as $arg) {
                 if ($arg->isDefaultValueAvailable()) {
-                    $re_args[$arg->getName()] = $arg->getDefaultValue();
+                    $reArgs[$arg->getName()] = $arg->getDefaultValue();
 
                     continue;
                 }
@@ -189,17 +189,12 @@ class Injector
                     $typeName   = $arg->getType()->getName();
                     $paramValue = $this->serviceContainer->get($typeName);
                 } else {
-                    throw new ServiceNotFoundException(sprintf('service from "%s" not found in service container', $arg->getName()));
+                    throw new ServiceNotFoundException(sprintf('Service from "%s" not found in service container', $arg->getName()));
                 }
-                $re_args[$arg->getName()] = $paramValue;
+                $reArgs[$arg->getName()] = $paramValue;
             }
         }
 
-        return $reflectionClass->newInstanceArgs($re_args);
-    }
-
-    private function isValidScope(int|string $scope): bool
-    {
-        return (bool) ServiceScope::tryFrom($scope);
+        return $reflectionClass->newInstanceArgs($reArgs);
     }
 }

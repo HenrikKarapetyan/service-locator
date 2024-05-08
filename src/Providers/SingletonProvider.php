@@ -19,17 +19,17 @@ use henrik\sl\Exceptions\ServiceConfigurationException;
 class SingletonProvider extends ObjectProvider
 {
     /**
-     * @return mixed|object
      * @throws ServiceConfigurationException
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      * @throws Exception
-     *
      * @throws ServiceNotFoundException
+     *
+     * @return object
      */
-    public function provide(): mixed
+    public function provide(): object
     {
         if ($this->instance === null) {
-            $this->instance = $this->injector->instantiate($this->value, $this->params);
+            $this->instance = $this->injector->instantiate((string) $this->definition->getClass(), $this->definition->getParams());
         }
 
         return $this->instance;

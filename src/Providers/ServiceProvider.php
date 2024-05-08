@@ -9,37 +9,22 @@ declare(strict_types=1);
 
 namespace henrik\sl\Providers;
 
+use henrik\sl\Definition;
 use henrik\sl\Injector;
 
 /**
  * Class ServiceProvider.
  */
-abstract class ServiceProvider extends Provider
+abstract class ServiceProvider implements ProviderInterface
 {
-    /**
-     * @var string
-     */
-    protected string $value;
-    /**
-     * @var array
-     */
-    protected array $params = [];
-    /**
-     * @var Injector
-     */
-    protected Injector $injector;
-
     /**
      * ServiceProvider constructor.
      *
-     * @param Injector $injector
-     * @param string $value
-     * @param array $params
+     * @param Injector   $injector
+     * @param Definition $definition
      */
-    public function __construct(Injector $injector, string $value, array $params = [])
-    {
-        $this->value = $value;
-        $this->params = $params;
-        $this->injector = $injector;
-    }
+    public function __construct(
+        protected Injector $injector,
+        protected Definition $definition
+    ) {}
 }

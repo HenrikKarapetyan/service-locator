@@ -15,24 +15,24 @@ enum ServiceScope: string
     /**
      * DI singletons.
      */
-    case SINGLETON = 'singleton';
+    case SINGLETON = 'SINGLETON';
 
     /**
      * DI prototypes.
      */
-    case PROTOTYPE = 'prototype';
+    case PROTOTYPE = 'PROTOTYPE';
 
     /**
      * DI factories.
      */
-    case FACTORY = 'factory';
+    case FACTORY = 'FACTORY';
     /**
      * DI parameters.
      */
-    case PARAM = 'param';
+    case PARAM = 'PARAM';
 
     /**
      * DI Aliases.
      */
-    case ALIAS = 'alias';
+    case ALIAS = 'ALIAS';
 }
