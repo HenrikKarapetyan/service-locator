@@ -17,6 +17,9 @@ return [
     ],
     ServiceScope::PARAM->value => [
         ['simple' => 'simpleValue'],
+        ['simple2' => function () {
+            return 'ok';
+        }],
     ],
     ServiceScope::ALIAS->value => [
         ['simpleAlias' => SampleClassA::class],

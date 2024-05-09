@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace henrik\sl\Providers;
 
 use henrik\sl\DefinitionInterface;
-use henrik\sl\Injector;
+use henrik\sl\DependencyInjector;
 
 /**
  * Class ServiceProvider.
@@ -20,11 +20,11 @@ abstract class ServiceProvider implements ProviderInterface
     /**
      * ServiceProvider constructor.
      *
-     * @param Injector            $injector
+     * @param DependencyInjector            $injector
      * @param DefinitionInterface $definition
      */
     public function __construct(
-        protected Injector $injector,
+        protected DependencyInjector  $injector,
         protected DefinitionInterface $definition
     ) {}
 }

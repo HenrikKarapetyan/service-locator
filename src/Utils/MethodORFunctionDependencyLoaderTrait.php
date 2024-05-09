@@ -7,7 +7,7 @@ namespace henrik\sl\Utils;
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\UnknownScopeException;
-use henrik\sl\Injector;
+use henrik\sl\DependencyInjector;
 use ReflectionParameter;
 use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
@@ -29,7 +29,7 @@ trait MethodORFunctionDependencyLoaderTrait
      */
     private static function loadDependencies(array $methodParams): array
     {
-        $injector = Injector::instance();
+        $injector = DependencyInjector::instance();
         $params   = [];
         if (!empty($methodParams)) {
             foreach ($methodParams as $param) {

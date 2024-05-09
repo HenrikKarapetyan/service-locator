@@ -12,7 +12,7 @@ namespace henrik\sl\Providers;
 use Exception;
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\InvalidAliasException;
-use henrik\sl\Injector;
+use henrik\sl\DependencyInjector;
 
 class AliasProvider extends ServiceProvider
 {
@@ -25,7 +25,7 @@ class AliasProvider extends ServiceProvider
     public function provide(): mixed
     {
         if (is_string($this->definition->getValue())) {
-            return Injector::instance()->get($this->definition->getValue());
+            return DependencyInjector::instance()->get($this->definition->getValue());
         }
 
         throw new InvalidAliasException('Invalid alias provided');

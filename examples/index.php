@@ -2,16 +2,17 @@
 
 require '../vendor/autoload.php';
 
-use henrik\sl\Injector;
+use henrik\sl\DependencyInjector;
 use henrik\sl\InjectorModes;
-use henrik\sl\SampleClasses\SampleClassD;
 
-$injector = Injector::instance();
+$injector = DependencyInjector::instance();
 $injector->setMode(InjectorModes::CONFIG_FILE);
 $services = require 'services.php';
 $injector->load($services);
 
-/** @var SampleClassD $val */
-$val = $injector->get(SampleClassD::class);
+/** @var callable $val */
+$val = $injector->get('simple2');
 
-$injector->dumpContainer();
+// $injector->dumpContainer();
+var_dump($val());
+

@@ -28,13 +28,13 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 /**
  * Class Injector.
  */
-class Injector
+class DependencyInjector
 {
     use ConfigurationLoaderTrait;
     /**
      * @var ?self
      */
-    private static ?Injector $instance = null;
+    private static ?DependencyInjector $instance = null;
     /**
      * @var ServicesContainer
      */
@@ -58,7 +58,7 @@ class Injector
     /**
      * @return self
      */
-    public static function instance(): Injector
+    public static function instance(): DependencyInjector
     {
         if (self::$instance == null) {
             self::$instance = new self();
@@ -73,7 +73,7 @@ class Injector
      * @throws UnknownScopeException
      * @throws IdAlreadyExistsException
      * @throws UndefinedModeException
-     * @throws UnknownConfigurationException|Exceptions\InvalidConfigurationException
+     * @throws UnknownConfigurationException
      */
     public function load(array|string $services): void
     {
@@ -103,6 +103,7 @@ class Injector
          * @var ReflectionClass<object> $reflectionClass
          */
         $reflectionClass = $this->reflectionsContainer->getReflectionClass($klass);
+
         if (!$reflectionClass->isInstantiable()) {
             throw new ServiceConfigurationException(sprintf('%s service constructor is private', $klass));
         }
