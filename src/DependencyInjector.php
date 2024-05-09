@@ -245,6 +245,7 @@ class DependencyInjector
 
                     continue;
                 }
+
                 if (isset($args[$arg->getName()])) {
                     if (is_string($args[$arg->getName()]) && str_starts_with($args[$arg->getName()], '#')) {
                         $serviceId               = trim($args[$arg->getName()], '#');
@@ -256,11 +257,7 @@ class DependencyInjector
 
                     continue;
                 }
-                if (!class_exists($arg->getName())) {
-                    throw new UnknownDependencyForClassConstructorException(
-                        sprintf('Unknown dependency `%s` for class `%s` constructor!', $arg->getName(), $reflectionClass->getName())
-                    );
-                }
+
                 $paramValue = $this->getValueFromContainer($arg);
 
                 $reArgs[$arg->getName()] = $paramValue;
