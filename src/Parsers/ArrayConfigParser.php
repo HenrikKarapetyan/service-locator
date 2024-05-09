@@ -7,8 +7,10 @@
  */
 declare(strict_types=1);
 
-namespace henrik\sl\Utils;
+namespace henrik\sl\Parsers;
 
+use henrik\container\exceptions\IdAlreadyExistsException;
+use henrik\container\exceptions\UndefinedModeException;
 use henrik\sl\Definition;
 use henrik\sl\DefinitionInterface;
 use henrik\sl\Exceptions\InvalidConfigurationException;
@@ -16,20 +18,44 @@ use henrik\sl\Exceptions\InvalidConfigurationException;
 /**
  * Class ArrayConfigParser.
  */
-class ArrayConfigParser
+class ArrayConfigParser extends AbstractConfigParser
 {
     /**
-     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArray
+     * @param array<string, array<string, int|string>> $services
+     *
+     * @throws UndefinedModeException
+     */
+    public function __construct(
+        private readonly array $services
+    ) {
+        parent::__construct();
+    }
+
+    /**
+     * @throws IdAlreadyExistsException
+     * @throws InvalidConfigurationException
+     */
+    public function parse(): void
+    {
+        foreach ($this->services as $scope => $serviceItems) {
+
+            $this->parseEachScopeData($scope, $serviceItems);
+        }
+
+    }
+
+    /**
+     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArrayOrFile
      *
      * @throws InvalidConfigurationException
      *
      * @return DefinitionInterface
      */
-    public static function parse(array $definitionArray): DefinitionInterface
+    public function parseEachItem(array $definitionArrayOrFile): DefinitionInterface
     {
-        $definition                = self::parseAsAssocArray($definitionArray);
-        $definition ?: $definition = self::parseWithoutId($definitionArray);
-        $definition ?: $definition = self::parseAsAliasOrParams($definitionArray);
+        $definition                = self::parseAsAssocArray($definitionArrayOrFile);
+        $definition ?: $definition = self::parseWithoutId($definitionArrayOrFile);
+        $definition ?: $definition = self::parseAsAliasOrParams($definitionArrayOrFile);
 
         return $definition;
     }
@@ -47,7 +73,7 @@ class ArrayConfigParser
      *
      * @return ?DefinitionInterface
      */
-    private static function parseAsAssocArray(array $definitionArray): ?DefinitionInterface
+    private function parseAsAssocArray(array $definitionArray): ?DefinitionInterface
     {
         if (isset($definitionArray['id'], $definitionArray['class'])) {
 
@@ -59,7 +85,7 @@ class ArrayConfigParser
                 $definition->setClass($definitionArray['class']);
                 if (isset($definitionArray['params'])) {
 
-                    $definition->setParams(self::parseParams($definitionArray['params']));
+                    $definition->setParams($this->parseParams($definitionArray['params']));
                 }
 
                 return $definition;
@@ -80,7 +106,7 @@ class ArrayConfigParser
      *
      * @return array<string, mixed>
      */
-    private static function parseParams(null|array|string $params): array
+    private function parseParams(null|array|string $params): array
     {
 
         $parsedParams = [];
@@ -107,7 +133,7 @@ class ArrayConfigParser
      *
      * @return ?DefinitionInterface
      */
-    private static function parseWithoutId(array $definitionArray): ?DefinitionInterface
+    private function parseWithoutId(array $definitionArray): ?DefinitionInterface
     {
         if (isset($definitionArray[0])) {
             if (!is_string($definitionArray[0])) {
@@ -117,7 +143,7 @@ class ArrayConfigParser
             $definition->setId($definitionArray[0]);
             $definition->setClass($definitionArray[0]);
             if (isset($definitionArray[1]) && is_array($definitionArray[1])) {
-                $definition->setParams(self::parseParams($definitionArray[1]));
+                $definition->setParams($this->parseParams($definitionArray[1]));
             }
 
             return $definition;
@@ -133,7 +159,7 @@ class ArrayConfigParser
      *
      * @return DefinitionInterface
      */
-    private static function parseAsAliasOrParams(array $definitionArray): DefinitionInterface
+    private function parseAsAliasOrParams(array $definitionArray): DefinitionInterface
     {
         $definition = new Definition();
         foreach ($definitionArray as $key => $value) {
@@ -144,10 +170,29 @@ class ArrayConfigParser
             }
             if (is_array($value)) {
                 /** @var array<array<int|string, mixed>>|string|null $value */
-                $definition->setParams(self::parseParams($value));
+                $definition->setParams($this->parseParams($value));
             }
         }
 
         return $definition;
+    }
+
+    /**
+     * @param string                    $scope
+     * @param array<string, int|string> $serviceItems
+     *
+     * @throws InvalidConfigurationException
+     * @throws IdAlreadyExistsException
+     *
+     * @return void
+     */
+    private function parseEachScopeData(string $scope, array $serviceItems): void
+    {
+        foreach ($serviceItems as $item) {
+            /** @var array<int|string, array<array<int|string, mixed>>|string|null> $item */
+            $definition = $this->parseEachItem($item);
+
+            $this->set($scope, $definition);
+        }
     }
 }

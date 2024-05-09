@@ -54,4 +54,14 @@ class ServicesContainer extends Container
 
         return null;
     }
+
+    /**
+     * @param array<DefinitionInterface> $definitions
+     *
+     * @return void
+     */
+    public function bulkAdd(array $definitions): void
+    {
+        $this->data = array_merge_recursive($definitions);
+    }
 }

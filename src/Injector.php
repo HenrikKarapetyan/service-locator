@@ -6,9 +6,10 @@ namespace henrik\sl;
 
 use Exception;
 use henrik\container\exceptions\IdAlreadyExistsException;
-use henrik\sl\Exceptions\InvalidConfigurationException;
+use henrik\container\exceptions\UndefinedModeException;
 use henrik\sl\Exceptions\ServiceConfigurationException;
 use henrik\sl\Exceptions\ServiceNotFoundException;
+use henrik\sl\Exceptions\UnknownConfigurationException;
 use henrik\sl\Exceptions\UnknownScopeException;
 use henrik\sl\Providers\AliasProvider;
 use henrik\sl\Providers\FactoryProvider;
@@ -18,7 +19,6 @@ use henrik\sl\Providers\SingletonProvider;
 use henrik\sl\ServiceScopeInterfaces\FactoryAwareInterface;
 use henrik\sl\ServiceScopeInterfaces\PrototypeAwareInterface;
 use henrik\sl\ServiceScopeInterfaces\SingletonAwareInterface;
-use henrik\sl\Utils\ArrayConfigParser;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -30,6 +30,7 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
  */
 class Injector
 {
+    use ConfigurationLoaderTrait;
     /**
      * @var ?self
      */
@@ -67,16 +68,21 @@ class Injector
     }
 
     /**
-     * @param array<string, array<string, int|string>> $services
+     * @param array<string, array<string, int|string>>|string $services
      *
      * @throws UnknownScopeException
      * @throws IdAlreadyExistsException
+     * @throws UndefinedModeException
+     * @throws UnknownConfigurationException|Exceptions\InvalidConfigurationException
      */
-    public function load(array $services): void
+    public function load(array|string $services): void
     {
-        foreach ($services as $scope => $serviceItems) {
+        $data = $this->guessExtensionOrDataType($services);
 
-            $this->parseEachScopeData($scope, $serviceItems);
+        foreach ($data as $scope => $definitionArray) {
+            foreach ($definitionArray as $definition) {
+                $this->add($scope, $definition);
+            }
         }
     }
 
@@ -309,25 +315,5 @@ class Injector
         }
 
         return ServiceScope::SINGLETON;
-    }
-
-    /**
-     * @param string                    $scope
-     * @param array<string, int|string> $serviceItems
-     *
-     * @throws UnknownScopeException
-     * @throws InvalidConfigurationException
-     * @throws IdAlreadyExistsException
-     *
-     * @return void
-     */
-    private function parseEachScopeData(string $scope, array $serviceItems): void
-    {
-        foreach ($serviceItems as $item) {
-            /** @var array<int|string, array<array<int|string, mixed>>|string|null> $item */
-            $definition = ArrayConfigParser::parse($item);
-
-            $this->add($scope, $definition);
-        }
     }
 }
