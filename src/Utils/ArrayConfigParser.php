@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace henrik\sl\Utils;
 
 use henrik\sl\Definition;
+use henrik\sl\DefinitionInterface;
+use henrik\sl\Exceptions\InvalidConfigurationException;
 
 /**
  * Class ArrayConfigParser.
@@ -17,50 +19,123 @@ use henrik\sl\Definition;
 class ArrayConfigParser
 {
     /**
-     * @param array<int|string, string|array<string, mixed>|null> $definitionArray
+     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArray
      *
-     * @return Definition
+     * @throws InvalidConfigurationException
+     *
+     * @return DefinitionInterface
      */
-    public static function parse(array $definitionArray): Definition
+    public static function parse(array $definitionArray): DefinitionInterface
     {
-        $definition = new Definition();
-        /**
-         * [
-         *      'id' =>'di',
-         *      'class' => 'henrik\sl\DI',
-         *      'params' => []
-         * ].
-         */
-        if (
-            isset($definitionArray['id'], $definitionArray['class'])
-            && is_string($definitionArray['id'])
-            && is_string($definitionArray['class'])
-        ) {
-            $definition->setId($definitionArray['id']);
-            $definition->setClass($definitionArray['class']);
-            if (isset($definitionArray['params'])) {
-                /** @var array<string, array<string,mixed>> $definitionArray */
-                $definition->setParams($definitionArray['params']);
+        $definition                = self::parseAsAssocArray($definitionArray);
+        $definition ?: $definition = self::parseWithoutId($definitionArray);
+        $definition ?: $definition = self::parseAsAliasOrParams($definitionArray);
+
+        return $definition;
+    }
+
+    /**
+     * [
+     *      'id' =>'di',
+     *      'class' => 'henrik\sl\DI',
+     *      'params' => []
+     * ].
+     *
+     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArray
+     *
+     * @throws InvalidConfigurationException
+     *
+     * @return ?DefinitionInterface
+     */
+    private static function parseAsAssocArray(array $definitionArray): ?DefinitionInterface
+    {
+        if (isset($definitionArray['id'], $definitionArray['class'])) {
+
+            if (is_string($definitionArray['id']) && is_string($definitionArray['class'])) {
+
+                $definition = new Definition();
+
+                $definition->setId($definitionArray['id']);
+                $definition->setClass($definitionArray['class']);
+                if (isset($definitionArray['params'])) {
+
+                    $definition->setParams(self::parseParams($definitionArray['params']));
+                }
+
+                return $definition;
             }
 
-            return $definition;
-            /**
-             * [henrik\sl\Di,['dd'=>'dd']].
-             */
+            throw new InvalidConfigurationException(
+                'Invalid configuration! The keys `id` and `class` are required and must be strings.'
+            );
         }
-        if (isset($definitionArray[0]) && is_string($definitionArray[0])) {
+
+        return null;
+    }
+
+    /**
+     * @param array<array<int|string, mixed>>|string|null $params
+     *
+     * @throws InvalidConfigurationException
+     *
+     * @return array<string, mixed>
+     */
+    private static function parseParams(null|array|string $params): array
+    {
+
+        $parsedParams = [];
+        if (is_array($params)) {
+            foreach ($params as $key => $value) {
+                if (!is_string($key)) {
+                    throw new InvalidConfigurationException('The `params` option must be assoc array and `key` must be string');
+                }
+                $parsedParams[$key] = $value;
+            }
+        }
+
+        return $parsedParams;
+    }
+
+    /**
+     * [
+     *      henrik\sl\Di,['dd'=>'dd']
+     * ].
+     *
+     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArray
+     *
+     * @throws InvalidConfigurationException
+     *
+     * @return ?DefinitionInterface
+     */
+    private static function parseWithoutId(array $definitionArray): ?DefinitionInterface
+    {
+        if (isset($definitionArray[0])) {
+            if (!is_string($definitionArray[0])) {
+                throw new InvalidConfigurationException('The array first value must be string');
+            }
             $definition = new Definition($definitionArray[0], $definitionArray[0]);
             $definition->setId($definitionArray[0]);
             $definition->setClass($definitionArray[0]);
             if (isset($definitionArray[1]) && is_array($definitionArray[1])) {
-                $definition->setParams($definitionArray[1]);
+                $definition->setParams(self::parseParams($definitionArray[1]));
             }
 
             return $definition;
         }
-        /**
-         * ['di'=>'henrik\sl\Di',['dd'=>'dd']].
-         */
+
+        return null;
+    }
+
+    /**
+     * @param array<int|string, string|array<array<int|string, mixed>>|string|null> $definitionArray
+     *
+     * @throws InvalidConfigurationException
+     *
+     * @return DefinitionInterface
+     */
+    private static function parseAsAliasOrParams(array $definitionArray): DefinitionInterface
+    {
+        $definition = new Definition();
         foreach ($definitionArray as $key => $value) {
             if (is_string($key)) {
                 $definition->setId($key);
@@ -68,8 +143,8 @@ class ArrayConfigParser
                 $definition->setValue($value);
             }
             if (is_array($value)) {
-                /** @var array<string, mixed> $value */
-                $definition->setParams($value);
+                /** @var array<array<int|string, mixed>>|string|null $value */
+                $definition->setParams(self::parseParams($value));
             }
         }
 

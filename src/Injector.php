@@ -6,6 +6,7 @@ namespace henrik\sl;
 
 use Exception;
 use henrik\container\exceptions\IdAlreadyExistsException;
+use henrik\sl\Exceptions\InvalidConfigurationException;
 use henrik\sl\Exceptions\ServiceConfigurationException;
 use henrik\sl\Exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\UnknownScopeException;
@@ -231,13 +232,13 @@ class Injector
     }
 
     /**
-     * @param string     $scope
-     * @param Definition $definition
+     * @param string              $scope
+     * @param DefinitionInterface $definition
      *
      * @throws UnknownScopeException
      * @throws IdAlreadyExistsException
      */
-    private function add(string $scope, Definition $definition): void
+    private function add(string $scope, DefinitionInterface $definition): void
     {
 
         $providerInst = match ($scope) {
@@ -314,15 +315,16 @@ class Injector
      * @param string                    $scope
      * @param array<string, int|string> $serviceItems
      *
-     * @throws IdAlreadyExistsException
      * @throws UnknownScopeException
+     * @throws InvalidConfigurationException
+     * @throws IdAlreadyExistsException
      *
      * @return void
      */
     private function parseEachScopeData(string $scope, array $serviceItems): void
     {
         foreach ($serviceItems as $item) {
-            /** @var array<string, string|array<string, mixed>> $item */
+            /** @var array<int|string, array<array<int|string, mixed>>|string|null> $item */
             $definition = ArrayConfigParser::parse($item);
 
             $this->add($scope, $definition);
