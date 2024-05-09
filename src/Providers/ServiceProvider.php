@@ -20,11 +20,11 @@ abstract class ServiceProvider implements ProviderInterface
     /**
      * ServiceProvider constructor.
      *
-     * @param DependencyInjector            $injector
+     * @param DependencyInjector  $injector
      * @param DefinitionInterface $definition
      */
     public function __construct(
-        protected DependencyInjector  $injector,
+        protected DependencyInjector $injector,
         protected DefinitionInterface $definition
     ) {}
 }

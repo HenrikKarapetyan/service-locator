@@ -11,8 +11,8 @@ namespace henrik\sl\Providers;
 
 use Exception;
 use henrik\container\exceptions\ServiceNotFoundException;
-use henrik\sl\Exceptions\InvalidAliasException;
 use henrik\sl\DependencyInjector;
+use henrik\sl\Exceptions\InvalidAliasException;
 
 class AliasProvider extends ServiceProvider
 {

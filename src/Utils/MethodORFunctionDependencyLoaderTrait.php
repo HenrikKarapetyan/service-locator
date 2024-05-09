@@ -6,8 +6,8 @@ namespace henrik\sl\Utils;
 
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
-use henrik\sl\Exceptions\UnknownScopeException;
 use henrik\sl\DependencyInjector;
+use henrik\sl\Exceptions\UnknownScopeException;
 use ReflectionParameter;
 use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
