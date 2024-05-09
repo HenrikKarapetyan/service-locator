@@ -11,6 +11,11 @@ class Definition implements DefinitionInterface
      */
     private array $params = [];
 
+    /**
+     * @var array<string, mixed> $args
+     */
+    private array $args = [];
+
     private mixed $value = null;
 
     /**
@@ -74,6 +79,24 @@ class Definition implements DefinitionInterface
     public function setParams(array $params): self
     {
         $this->params = $params;
+
+        return $this;
+    }
+
+    /** {@inheritdoc} */
+    public function getArgs(): array
+    {
+        return $this->args;
+    }
+
+    /**
+     * @param array<string, mixed> $args
+     *
+     * @return $this
+     */
+    public function setArgs(array $args): self
+    {
+        $this->args = $args;
 
         return $this;
     }

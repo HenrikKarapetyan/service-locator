@@ -26,7 +26,7 @@ class PrototypeProvider extends ObjectProvider
     public function provide(): object
     {
         if ($this->instance === null) {
-            $this->instance = $this->injector->instantiate((string) $this->definition->getClass(), $this->definition->getParams());
+            $this->instance = $this->injector->instantiate($this->definition);
         }
 
         return clone $this->instance;

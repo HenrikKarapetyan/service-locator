@@ -83,6 +83,11 @@ class ArrayConfigParser extends AbstractConfigParser
 
                 $definition->setId($definitionArray['id']);
                 $definition->setClass($definitionArray['class']);
+
+                if (isset($definitionArray['args']) && is_array($definitionArray['args'])) {
+                    $definition->setArgs($this->parseParams($definitionArray['args']));
+                }
+
                 if (isset($definitionArray['params'])) {
 
                     $definition->setParams($this->parseParams($definitionArray['params']));

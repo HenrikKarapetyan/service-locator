@@ -8,7 +8,11 @@ use henrik\sl\ServiceScope;
 
 return [
     ServiceScope::FACTORY->value => [
-        [SampleClassA::class],
+        [
+            'id'    => SampleClassA::class,
+            'class' => SampleClassA::class,
+            'args'  => ['uri' => 'xxx', 'sampleClassX' => '#henrik\sl\SampleClasses\SampleClassX'],
+        ],
     ],
     ServiceScope::SINGLETON->value => [
         [SampleClassB::class],

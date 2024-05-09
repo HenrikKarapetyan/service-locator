@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace henrik\sl;
 
-use Exception;
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\UndefinedModeException;
 use henrik\sl\Exceptions\ServiceConfigurationException;
 use henrik\sl\Exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\UnknownConfigurationException;
+use henrik\sl\Exceptions\UnknownDependencyForClassConstructorException;
 use henrik\sl\Exceptions\UnknownScopeException;
 use henrik\sl\Providers\AliasProvider;
 use henrik\sl\Providers\FactoryProvider;
@@ -20,6 +20,7 @@ use henrik\sl\ServiceScopeInterfaces\FactoryAwareInterface;
 use henrik\sl\ServiceScopeInterfaces\PrototypeAwareInterface;
 use henrik\sl\ServiceScopeInterfaces\SingletonAwareInterface;
 use ReflectionClass;
+use ReflectionException;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
@@ -31,6 +32,7 @@ use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 class DependencyInjector
 {
     use ConfigurationLoaderTrait;
+
     /**
      * @var ?self
      */
@@ -87,38 +89,40 @@ class DependencyInjector
     }
 
     /**
-     * @param string               $klass
-     * @param array<string, mixed> $params
+     * @param DefinitionInterface $definition
      *
-     * @throws \henrik\container\exceptions\ServiceNotFoundException
      * @throws IdAlreadyExistsException
+     * @throws ReflectionException
      * @throws ServiceConfigurationException
      * @throws ServiceNotFoundException
+     * @throws UnknownScopeException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws ClassNotFoundException
      *
      * @return object
      */
-    public function instantiate(string $klass, array $params = []): object
+    public function instantiate(DefinitionInterface $definition): object
     {
         /**
          * @var ReflectionClass<object> $reflectionClass
          */
-        $reflectionClass = $this->reflectionsContainer->getReflectionClass($klass);
+        $reflectionClass = $this->reflectionsContainer->getReflectionClass((string) $definition->getClass());
 
         if (!$reflectionClass->isInstantiable()) {
-            throw new ServiceConfigurationException(sprintf('%s service constructor is private', $klass));
+            throw new ServiceConfigurationException(sprintf('The service %s constructor is private', $definition->getClass()));
         }
 
         $constructor = $reflectionClass->getConstructor();
         if (empty($constructor)) {
+            $klass = $definition->getClass();
+            $obj   = new $klass();
 
-            $obj = new $klass();
-
-            return $this->initializeParams($obj, $params);
+            return $this->initializeParams($obj, $definition->getParams());
         }
 
-        $obj = $this->loadMethodDependencies($reflectionClass, $constructor);
+        $obj = $this->loadMethodDependencies($reflectionClass, $constructor, $definition->getArgs());
 
-        return $this->initializeParams($obj, $params);
+        return $this->initializeParams($obj, $definition->getParams());
     }
 
     /**
@@ -155,10 +159,10 @@ class DependencyInjector
     /**
      * @param string $id
      *
-     * @throws ClassNotFoundException*
-     * @throws IdAlreadyExistsException
      * @throws ServiceNotFoundException|IdAlreadyExistsException
      * @throws \henrik\container\exceptions\ServiceNotFoundException|UnknownScopeException
+     * @throws ClassNotFoundException*
+     * @throws IdAlreadyExistsException
      *
      * @return mixed
      */
@@ -211,28 +215,56 @@ class DependencyInjector
     /**
      * @param ReflectionClass<object> $reflectionClass
      * @param ReflectionMethod        $method
+     * @param array<string, mixed>    $args
      *
+     * @throws ClassNotFoundException
+     * @throws IdAlreadyExistsException
      * @throws ServiceNotFoundException
-     * @throws Exception
-     * @throws \henrik\container\exceptions\ServiceNotFoundException
+     * @throws UnknownScopeException
+     * @throws ReflectionException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException|UnknownDependencyForClassConstructorException
+     * @throws UnknownDependencyForClassConstructorException
      *
      * @return object
      */
-    private function loadMethodDependencies(ReflectionClass $reflectionClass, ReflectionMethod $method): object
+    private function loadMethodDependencies(ReflectionClass $reflectionClass, ReflectionMethod $method, array $args): object
     {
-        $args   = $method->getParameters();
-        $reArgs = [];
-        if (count($args) > 0) {
+        $constructorArguments = $method->getParameters();
+        $reArgs               = [];
+        if (count($constructorArguments) > 0) {
 
-            foreach ($args as $arg) {
+            foreach ($constructorArguments as $arg) {
+
                 if ($arg->isDefaultValueAvailable()) {
-                    $reArgs[$arg->getName()] = $arg->getDefaultValue();
+                    if (!isset($args[$arg->getName()])) {
+                        $reArgs[$arg->getName()] = $arg->getDefaultValue();
+
+                        continue;
+                    }
+                    $reArgs[$arg->getName()] = $args[$arg->getName()];
 
                     continue;
+                }
+                if (isset($args[$arg->getName()])) {
+                    if (is_string($args[$arg->getName()]) && str_starts_with($args[$arg->getName()], '#')) {
+                        $serviceId               = trim($args[$arg->getName()], '#');
+                        $reArgs[$arg->getName()] = $this->get($serviceId);
+
+                        continue;
+                    }
+                    $reArgs[$arg->getName()] = $args[$arg->getName()];
+
+                    continue;
+                }
+                if (!class_exists($arg->getName())) {
+                    throw new UnknownDependencyForClassConstructorException(
+                        sprintf('Unknown dependency `%s` for class `%s` constructor!', $arg->getName(), $reflectionClass->getName())
+                    );
                 }
                 $paramValue = $this->getValueFromContainer($arg);
 
                 $reArgs[$arg->getName()] = $paramValue;
+
             }
         }
 
@@ -264,10 +296,10 @@ class DependencyInjector
     /**
      * @param ReflectionParameter $arg
      *
-     * @throws UnknownScopeException
-     * @throws \henrik\container\exceptions\ServiceNotFoundException|IdAlreadyExistsException
      * @throws ClassNotFoundException
      * @throws ServiceNotFoundException
+     * @throws UnknownScopeException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException|IdAlreadyExistsException
      *
      * @return mixed
      */

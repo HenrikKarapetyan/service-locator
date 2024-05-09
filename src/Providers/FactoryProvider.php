@@ -22,6 +22,6 @@ class FactoryProvider extends ObjectProvider
      */
     public function provide(): object
     {
-        return $this->injector->instantiate((string) $this->definition->getClass(), $this->definition->getParams());
+        return $this->injector->instantiate($this->definition);
     }
 }
