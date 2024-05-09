@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace henrik\sl\Utils;
 
+use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
+use henrik\sl\Exceptions\UnknownScopeException;
 use henrik\sl\Injector;
 use ReflectionParameter;
+use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Trait MethodORFunctionDependencyLoaderTrait.
@@ -17,6 +20,10 @@ trait MethodORFunctionDependencyLoaderTrait
      * @param array<int, reflectionParameter> $methodParams
      *
      * @throws ServiceNotFoundException
+     * @throws ClassNotFoundException
+     * @throws IdAlreadyExistsException
+     * @throws \henrik\sl\Exceptions\ServiceNotFoundException
+     * @throws UnknownScopeException
      *
      * @return array<int, mixed>
      */

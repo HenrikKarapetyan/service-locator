@@ -154,7 +154,8 @@ class Injector
     /**
      * @param string $id
      *
-     * @throws ClassNotFoundException*@throws IdAlreadyExistsException
+     * @throws ClassNotFoundException*
+     * @throws IdAlreadyExistsException
      * @throws ServiceNotFoundException|IdAlreadyExistsException
      * @throws \henrik\container\exceptions\ServiceNotFoundException|UnknownScopeException
      *

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace henrik\sl\Utils;
 
+use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\MethodNotFoundException;
+use henrik\sl\Exceptions\UnknownScopeException;
 use ReflectionException;
 use ReflectionMethod;
+use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Class MethodInvoker.
@@ -23,6 +26,10 @@ class MethodInvoker
      * @throws MethodNotFoundException
      * @throws ReflectionException
      * @throws ServiceNotFoundException
+     * @throws ClassNotFoundException
+     * @throws IdAlreadyExistsException
+     * @throws \henrik\sl\Exceptions\ServiceNotFoundException
+     * @throws UnknownScopeException
      *
      * @return mixed|null
      */
