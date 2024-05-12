@@ -7,10 +7,10 @@ namespace henrik\sl\Utils;
 use Closure;
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
+use henrik\sl\Exceptions\ClassNotFoundException;
 use henrik\sl\Exceptions\UnknownScopeException;
 use ReflectionException;
 use ReflectionFunction;
-use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Class FunctionInvoker.
@@ -22,12 +22,11 @@ class FunctionInvoker
     /**
      * @param Closure $func
      *
-     * @throws ReflectionException
      * @throws ServiceNotFoundException
-     * @throws ClassNotFoundException
      * @throws IdAlreadyExistsException
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
-     * @throws UnknownScopeException
+     * @throws UnknownScopeException|ClassNotFoundException
+     * @throws ReflectionException
      *
      * @return mixed
      */

@@ -6,10 +6,10 @@ namespace henrik\sl;
 
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\UndefinedModeException;
+use henrik\sl\Exceptions\ClassNotFoundException;
 use henrik\sl\Exceptions\ServiceConfigurationException;
 use henrik\sl\Exceptions\ServiceNotFoundException;
 use henrik\sl\Exceptions\UnknownConfigurationException;
-use henrik\sl\Exceptions\UnknownDependencyForClassConstructorException;
 use henrik\sl\Exceptions\UnknownScopeException;
 use henrik\sl\Providers\AliasProvider;
 use henrik\sl\Providers\FactoryProvider;
@@ -24,7 +24,6 @@ use ReflectionException;
 use ReflectionMethod;
 use ReflectionNamedType;
 use ReflectionParameter;
-use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Class Injector.
@@ -207,9 +206,14 @@ class DependencyInjector
     {
         foreach ($this->serviceContainer->getAll() as $id => $containerItem) {
             if (is_object($containerItem)) {
-                printf("id: %s, class: %s \n", $id, get_class($containerItem));
+                printf("Id: %s, class: %s \n", $id, get_class($containerItem));
             }
         }
+    }
+
+    public function has(string $getName): bool
+    {
+        return $this->serviceContainer->has($getName);
     }
 
     /**
@@ -222,8 +226,7 @@ class DependencyInjector
      * @throws ServiceNotFoundException
      * @throws UnknownScopeException
      * @throws ReflectionException
-     * @throws \henrik\container\exceptions\ServiceNotFoundException|UnknownDependencyForClassConstructorException
-     * @throws UnknownDependencyForClassConstructorException
+     * @throws \henrik\container\exceptions\ServiceNotFoundException
      *
      * @return object
      */

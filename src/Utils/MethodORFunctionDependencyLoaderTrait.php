@@ -7,9 +7,10 @@ namespace henrik\sl\Utils;
 use henrik\container\exceptions\IdAlreadyExistsException;
 use henrik\container\exceptions\ServiceNotFoundException;
 use henrik\sl\DependencyInjector;
+use henrik\sl\Exceptions\ClassNotFoundException;
 use henrik\sl\Exceptions\UnknownScopeException;
+use ReflectionNamedType;
 use ReflectionParameter;
-use Symfony\Component\VarExporter\Exception\ClassNotFoundException;
 
 /**
  * Trait MethodORFunctionDependencyLoaderTrait.
@@ -19,11 +20,10 @@ trait MethodORFunctionDependencyLoaderTrait
     /**
      * @param array<int, reflectionParameter> $methodParams
      *
-     * @throws ServiceNotFoundException
-     * @throws ClassNotFoundException
      * @throws IdAlreadyExistsException
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
-     * @throws UnknownScopeException
+     * @throws UnknownScopeException|ClassNotFoundException
+     * @throws ServiceNotFoundException
      *
      * @return array<int, mixed>
      */
@@ -31,9 +31,20 @@ trait MethodORFunctionDependencyLoaderTrait
     {
         $injector = DependencyInjector::instance();
         $params   = [];
+
         if (!empty($methodParams)) {
+
             foreach ($methodParams as $param) {
-                $params[] = $injector->get($param->getName());
+
+                if (!$param->getType() instanceof ReflectionNamedType) {
+                    throw new ClassNotFoundException($param->getName());
+                }
+
+                if ($injector->has($param->getName())) {
+                    $params[] = $injector->get($param->getName());
+                }
+
+                $params[] = $injector->get($param->getType()->getName());
             }
         }
 

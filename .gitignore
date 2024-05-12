@@ -4,3 +4,6 @@ vendor/
 
 phpmd-report.html
 .php-cs-fixer.cache
+
+examples
+src/SampleClasses
