@@ -20,8 +20,9 @@ class MethodInvoker
     use MethodORFunctionDependencyLoaderTrait;
 
     /**
-     * @param object $obj
-     * @param string $method
+     * @param object                   $obj
+     * @param string                   $method
+     * @param array<int|string, mixed> $args
      *
      * @throws ReflectionException
      * @throws ServiceNotFoundException
@@ -32,16 +33,16 @@ class MethodInvoker
      *
      * @return mixed|null
      */
-    public static function invoke(object $obj, string $method): mixed
+    public static function invoke(object $obj, string $method, array $args = []): mixed
     {
         if (method_exists($obj, $method)) {
             $klass     = get_class($obj);
             $refMethod = new ReflectionMethod($klass, $method);
-            $params    = self::loadDependencies($refMethod->getParameters());
+            $params    = self::loadDependencies($refMethod->getParameters(), $args);
 
             return $refMethod->invokeArgs($obj, $params);
         }
 
-        throw new MethodNotFoundException(sprintf('method "%s" not found', $method));
+        throw new MethodNotFoundException(sprintf('Method "%s" not found', $method));
     }
 }

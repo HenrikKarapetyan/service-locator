@@ -20,20 +20,22 @@ class FunctionInvoker
     use MethodORFunctionDependencyLoaderTrait;
 
     /**
-     * @param Closure $func
+     * @param Closure                  $func
+     * @param array<int|string, mixed> $args
      *
-     * @throws ServiceNotFoundException
+     * @throws ClassNotFoundException
      * @throws IdAlreadyExistsException
-     * @throws \henrik\sl\Exceptions\ServiceNotFoundException
-     * @throws UnknownScopeException|ClassNotFoundException
      * @throws ReflectionException
+     * @throws ServiceNotFoundException
+     * @throws UnknownScopeException
+     * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      *
      * @return mixed
      */
-    public static function invoke(Closure $func): mixed
+    public static function invoke(Closure $func, array $args = []): mixed
     {
         $refFunc = new ReflectionFunction($func);
-        $params  = self::loadDependencies($refFunc->getParameters());
+        $params  = self::loadDependencies($refFunc->getParameters(), $args);
 
         return $refFunc->invokeArgs($params);
     }

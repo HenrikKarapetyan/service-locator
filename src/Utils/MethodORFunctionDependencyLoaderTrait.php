@@ -19,6 +19,7 @@ trait MethodORFunctionDependencyLoaderTrait
 {
     /**
      * @param array<int, reflectionParameter> $methodParams
+     * @param array<int|string, mixed>        $args
      *
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      * @throws UnknownScopeException|ClassNotFoundException
@@ -27,7 +28,7 @@ trait MethodORFunctionDependencyLoaderTrait
      *
      * @return array<int, mixed>
      */
-    private static function loadDependencies(array $methodParams): array
+    private static function loadDependencies(array $methodParams, array $args = []): array
     {
         $injector = DependencyInjector::instance();
         $params   = [];
@@ -35,6 +36,16 @@ trait MethodORFunctionDependencyLoaderTrait
         if (!empty($methodParams)) {
 
             foreach ($methodParams as $param) {
+
+                if ($param->isDefaultValueAvailable() && !isset($args[$param->getName()])) {
+                    $params[] = $param->getDefaultValue();
+                }
+
+                if (isset($args[$param->getName()])) {
+                    $params[] = $args[$param->getName()];
+
+                    continue;
+                }
 
                 if (!$param->getType() instanceof ReflectionNamedType) {
                     throw new ClassNotFoundException($param->getName());
