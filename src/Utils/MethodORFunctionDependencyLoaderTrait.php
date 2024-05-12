@@ -20,10 +20,10 @@ trait MethodORFunctionDependencyLoaderTrait
     /**
      * @param array<int, reflectionParameter> $methodParams
      *
-     * @throws IdAlreadyExistsException
      * @throws \henrik\sl\Exceptions\ServiceNotFoundException
      * @throws UnknownScopeException|ClassNotFoundException
      * @throws ServiceNotFoundException
+     * @throws IdAlreadyExistsException
      *
      * @return array<int, mixed>
      */
@@ -39,12 +39,13 @@ trait MethodORFunctionDependencyLoaderTrait
                 if (!$param->getType() instanceof ReflectionNamedType) {
                     throw new ClassNotFoundException($param->getName());
                 }
-
                 if ($injector->has($param->getName())) {
                     $params[] = $injector->get($param->getName());
-                }
 
+                    continue;
+                }
                 $params[] = $injector->get($param->getType()->getName());
+
             }
         }
 
